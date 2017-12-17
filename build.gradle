@@ -3,9 +3,10 @@ plugins {
 }
 
 group = 'co.uk.brierieserver'
-version = '1.8-S5.1-MC1.10.2'
+version = '1.8-S7.0-MC1.12.2'
 description = 'Inventory handler on death'
 
 dependencies {
-    compile 'org.spongepowered:spongeapi:5.1.0'
+    compile 'org.spongepowered:spongeapi:7.0.0-20171213.053704-67'
+    compile 'com.google.code.gson:gson:2.8.1'
 }

@@ -32,9 +32,6 @@ import org.spongepowered.api.effect.particle.ParticleTypes;
 import org.spongepowered.api.entity.Entity;
 import org.spongepowered.api.entity.EntityTypes;
 import org.spongepowered.api.entity.living.player.Player;
-import org.spongepowered.api.event.cause.Cause;
-import org.spongepowered.api.event.cause.entity.spawn.EntitySpawnCause;
-import org.spongepowered.api.event.cause.entity.spawn.SpawnTypes;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.item.inventory.ItemStackSnapshot;
 import org.spongepowered.api.item.inventory.type.InventoryRow;
@@ -44,12 +41,12 @@ import org.spongepowered.api.text.format.TextColors;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 
-import com.carrot.lethalcarrot.object.Grave;
 import com.flowpowered.math.vector.Vector2i;
 import com.flowpowered.math.vector.Vector3d;
 import com.flowpowered.math.vector.Vector3i;
 import com.google.common.reflect.TypeToken;
 
+import com.carrot.lethalcarrot.object.Grave;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.commented.CommentedConfigurationNode;
 import ninja.leaping.configurate.hocon.HoconConfigurationLoader;
@@ -132,7 +129,7 @@ public class InventorySave {
 
 			@Override
 			public void run() {
-				loc.setBlockType(BlockTypes.SKULL, KeepInv.getCause());
+				loc.setBlockType(BlockTypes.SKULL);
 				MessageChannel.TO_CONSOLE.send(Text.of("Spawned grave of ", player.getName(), " at ", loc.getBlockX(), " ", loc.getBlockY(), " ", loc.getBlockZ(), " [",loc.getExtent().getName(), "]"));
 				player.sendMessage(Text.of(TextColors.DARK_GREEN, "Your grave spawned at ", TextColors.YELLOW, loc.getBlockX(), " ", loc.getBlockY(), " ", loc.getBlockZ(), TextColors.GRAY, " [", loc.getExtent().getName(), "]"));
 				Optional<TileEntity> grave = loc.getTileEntity();
@@ -182,8 +179,7 @@ public class InventorySave {
 			for (ItemStackSnapshot reject : player.getInventory().query(InventoryRow.class).offer(item).getRejectedItems()){
 				Entity newItem = player.getWorld().createEntity(EntityTypes.ITEM, player.getLocation().getPosition());
 				newItem.offer(Keys.REPRESENTED_ITEM, reject);
-				player.getWorld().spawnEntity(newItem, Cause.source(EntitySpawnCause.builder()
-						.entity(newItem).type(SpawnTypes.PLUGIN).build()).build());
+				player.getWorld().spawnEntity(newItem);
 			}
 		}
 	}
@@ -211,7 +207,7 @@ public class InventorySave {
 			graves.get(loc.getExtent().getUniqueId()).remove(loc.getBlockPosition());
 			if (graves.get(loc.getExtent().getUniqueId()).isEmpty())
 				graves.remove(loc.getExtent().getUniqueId());
-			loc.setBlockType(BlockTypes.AIR, KeepInv.getCause());
+			loc.setBlockType(BlockTypes.AIR);
 			player.spawnParticles(graveParticle, loc.getPosition(), 60);
 		}
 	}

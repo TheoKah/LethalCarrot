@@ -20,8 +20,6 @@ import org.spongepowered.api.event.Order;
 import org.spongepowered.api.event.block.ChangeBlockEvent;
 import org.spongepowered.api.event.block.InteractBlockEvent;
 import org.spongepowered.api.event.cause.Cause;
-import org.spongepowered.api.event.cause.NamedCause;
-import org.spongepowered.api.event.cause.entity.spawn.EntitySpawnCause;
 import org.spongepowered.api.event.entity.living.humanoid.player.RespawnPlayerEvent;
 import org.spongepowered.api.event.filter.cause.First;
 import org.spongepowered.api.event.game.state.GameInitializationEvent;
@@ -121,11 +119,8 @@ public class KeepInv {
 
 	@Listener(order = Order.EARLY, beforeModifications = true)
 	public void onItemDrops(DropItemEvent.Destruct event) {
-		Optional<EntitySpawnCause> source = event.getCause().get(NamedCause.SOURCE, EntitySpawnCause.class);
-		if (!source.isPresent())
-			return;
-		if (source.get().getEntity() instanceof Player) {
-			Player player = (Player) source.get().getEntity();
+		if (event.getSource() instanceof Player) {
+			Player player = (Player) event.getSource();
 			try {
 				InventorySave.save(player, event.getEntities());
 				event.setCancelled(true);
@@ -220,7 +215,7 @@ public class KeepInv {
 
 	public static Cause getCause()
 	{
-		return Cause.source(Sponge.getPluginManager().fromInstance(getInstance()).get()).build();
+		return Sponge.getCauseStackManager().getCurrentCause();
 	}
 
 	public static KeepInv getInstance()
