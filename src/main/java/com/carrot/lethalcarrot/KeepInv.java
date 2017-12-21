@@ -38,7 +38,7 @@ import com.google.inject.Inject;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 
 
-@Plugin(id = "spongekeepinv", name = "Sponge Keep Inventory", authors = {"Carrot"})
+@Plugin(id = "lethalcarrot", name = "Lethal Carrot", authors = {"Carrot"})
 public class KeepInv {
 	@Inject
 	private Logger logger;
@@ -229,7 +229,7 @@ public class KeepInv {
 	}
 
 	private static Text getClickableKeepInv() {
-		return Text.builder("[GET ITEMS]").color(TextColors.YELLOW).onClick(TextActions.runCommand("/keepinv")).build();
+		return Text.builder("[CLICK HERE TO GET YOUR ITEMS BACK]").color(TextColors.YELLOW).onClick(TextActions.runCommand("/keepinv")).build();
 	}
 
 }
