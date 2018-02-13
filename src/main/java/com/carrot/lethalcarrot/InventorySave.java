@@ -13,9 +13,12 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -35,6 +38,7 @@ import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.item.inventory.ItemStackSnapshot;
 import org.spongepowered.api.item.inventory.type.InventoryRow;
+import org.spongepowered.api.scheduler.Task;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.channel.MessageChannel;
 import org.spongepowered.api.text.format.TextColors;
@@ -61,6 +65,7 @@ public class InventorySave {
 	private static ConfigurationLoader<CommentedConfigurationNode> loader;
 
 	private static Map<UUID, List<String>> keepinv = new HashMap<>();
+	private static HashSet<UUID> inUse = new HashSet<>();
 	private static Map<UUID, Map<Vector3i, Grave>> graves = new HashMap<>();
 
 	private static ParticleEffect graveParticle = ParticleEffect.builder().type(ParticleTypes.FIREWORKS_SPARK).quantity(6).build();
@@ -185,11 +190,23 @@ public class InventorySave {
 	}
 
 	static public boolean load(Player player) throws IOException, ObjectMappingException {
+		if (inUse.contains(player.getUniqueId())) {
+			player.sendMessage(Text.of(TextColors.DARK_RED, "Wait 5 seconds between two calls"));
+			return true;
+		}
 		if (keepinv.containsKey(player.getUniqueId())) {
+			inUse.add(player.getUniqueId());
 			for (String file : keepinv.get(player.getUniqueId())) {
 				giveItems(player, loadEntities(file));
 				keepinv.remove(player.getUniqueId());
 			}
+			Sponge.getScheduler().createTaskBuilder().execute(new Consumer<Task>() {
+				@Override
+				public void accept(Task t) {
+					t.cancel();
+					inUse.remove(player.getUniqueId());
+				}
+			}).delay(5, TimeUnit.SECONDS).submit(KeepInv.getInstance());
 			return true;
 		}
 		return false;
