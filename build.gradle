@@ -3,7 +3,7 @@ plugins {
 }
 
 group = 'co.uk.brierieserver'
-version = '1.10-S7.0-MC1.12.2'
+version = '1.11-S7.0-MC1.12.2'
 description = 'Inventory handler on death'
 
 dependencies {
