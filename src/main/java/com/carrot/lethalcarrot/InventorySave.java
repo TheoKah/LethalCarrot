@@ -37,6 +37,7 @@ import org.spongepowered.api.entity.EntityTypes;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.item.inventory.ItemStackSnapshot;
+import org.spongepowered.api.item.inventory.query.QueryOperationTypes;
 import org.spongepowered.api.item.inventory.type.InventoryRow;
 import org.spongepowered.api.scheduler.Task;
 import org.spongepowered.api.text.Text;
@@ -181,7 +182,7 @@ public class InventorySave {
 
 	static private void giveItems(Player player, List<ItemStack> items) {
 		for (ItemStack item : items) {
-			for (ItemStackSnapshot reject : player.getInventory().query(InventoryRow.class).offer(item).getRejectedItems()){
+			for (ItemStackSnapshot reject : player.getInventory().query(QueryOperationTypes.INVENTORY_TYPE.of(InventoryRow.class)).offer(item).getRejectedItems()){
 				Entity newItem = player.getWorld().createEntity(EntityTypes.ITEM, player.getLocation().getPosition());
 				newItem.offer(Keys.REPRESENTED_ITEM, reject);
 				player.getWorld().spawnEntity(newItem);
