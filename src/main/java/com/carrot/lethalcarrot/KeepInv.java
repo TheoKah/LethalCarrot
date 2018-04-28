@@ -118,18 +118,14 @@ public class KeepInv {
 	}
 
 	@Listener(order = Order.EARLY, beforeModifications = true)
-	public void onItemDrops(DropItemEvent.Destruct event) {
-		if (event.getSource() instanceof Player) {
-			Player player = (Player) event.getSource();
-			try {
-				InventorySave.save(player, event.getEntities());
-				event.setCancelled(true);
-			} catch (IOException | ObjectMappingException e) {
-				player.sendMessage(Text.of(TextColors.DARK_RED, "An error occured. Your items are on the ground."));
-				e.printStackTrace();
-			}
+	public void onItemDrops(DropItemEvent.Destruct event, @First Player player) {
+		try {
+			InventorySave.save(player, event.getEntities());
+			event.setCancelled(true);
+		} catch (IOException | ObjectMappingException e) {
+			player.sendMessage(Text.of(TextColors.DARK_RED, "An error occured. Your items are on the ground."));
+			e.printStackTrace();
 		}
-
 	}
 
 	@Listener
