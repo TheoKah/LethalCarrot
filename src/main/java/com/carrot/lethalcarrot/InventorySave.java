@@ -37,12 +37,14 @@ import org.spongepowered.api.entity.EntityTypes;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.item.inventory.ItemStackSnapshot;
+import org.spongepowered.api.item.inventory.entity.Hotbar;
 import org.spongepowered.api.item.inventory.query.QueryOperationTypes;
 import org.spongepowered.api.item.inventory.type.InventoryRow;
 import org.spongepowered.api.scheduler.Task;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.channel.MessageChannel;
 import org.spongepowered.api.text.format.TextColors;
+import org.spongepowered.api.util.Tuple;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 
@@ -68,6 +70,7 @@ public class InventorySave {
 	private static Map<UUID, List<String>> keepinv = new HashMap<>();
 	private static HashSet<UUID> inUse = new HashSet<>();
 	private static Map<UUID, Map<Vector3i, Grave>> graves = new HashMap<>();
+	private static Map<UUID, Tuple<String, Tuple<UUID, Vector3i>>> last = new HashMap<>();
 
 	private static ParticleEffect graveParticle = ParticleEffect.builder().type(ParticleTypes.FIREWORKS_SPARK).quantity(6).build();
 
@@ -180,13 +183,19 @@ public class InventorySave {
 		return keepinv.containsKey(player.getUniqueId());
 	}
 
-	static private void giveItems(Player player, List<ItemStack> items) {
-		for (ItemStack item : items) {
-			for (ItemStackSnapshot reject : player.getInventory().query(QueryOperationTypes.INVENTORY_TYPE.of(InventoryRow.class)).offer(item).getRejectedItems()){
+	static public void giveItem(Player player, ItemStack item) {
+		for (ItemStackSnapshot reject : player.getInventory().query(QueryOperationTypes.INVENTORY_TYPE.of(Hotbar.class)).offer(item).getRejectedItems()){
+			for (ItemStackSnapshot rejecttwice : player.getInventory().query(QueryOperationTypes.INVENTORY_TYPE.of(InventoryRow.class)).offer(reject.createStack()).getRejectedItems()){
 				Entity newItem = player.getWorld().createEntity(EntityTypes.ITEM, player.getLocation().getPosition());
-				newItem.offer(Keys.REPRESENTED_ITEM, reject);
+				newItem.offer(Keys.REPRESENTED_ITEM, rejecttwice);
 				player.getWorld().spawnEntity(newItem);
 			}
+		}
+	}
+
+	static public void giveItems(Player player, List<ItemStack> items) {
+		for (ItemStack item : items) {
+			giveItem(player, item);
 		}
 	}
 
@@ -238,13 +247,23 @@ public class InventorySave {
 			if (!keepinv.containsKey(player.getUniqueId()))
 				keepinv.put(player.getUniqueId(), new ArrayList<>());
 			keepinv.get(player.getUniqueId()).add(saveEntities(player, entities));
+			last.put(player.getUniqueId(), new Tuple<String, Tuple<UUID,Vector3i>>(new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(new Date()), new Tuple<UUID, Vector3i>(player.getWorld().getUniqueId(), player.getLocation().getBlockPosition())));
 		} else {
 			Grave grave = new Grave(player.getUniqueId(), spawnGrave(player), saveEntities(player, entities));
 			if (!graves.containsKey(grave.world))
 				graves.put(grave.world, new HashMap<>());
 			graves.get(grave.world).put(grave.location, grave);
+			last.put(player.getUniqueId(), new Tuple<String, Tuple<UUID,Vector3i>>(grave.date, new Tuple<UUID, Vector3i>(grave.world, grave.location)));
 		}
 		sync();
+	}
+
+	static public Optional<Tuple<String, Tuple<UUID, Vector3i>>> getLastDeath(UUID player) {
+		if (!last.containsKey(player))
+			return Optional.empty();
+		Optional<Tuple<String, Tuple<UUID, Vector3i>>> grave = Optional.of(last.get(player));
+		last.remove(player);
+		return grave;
 	}
 
 	private static List<ItemStack> loadEntities(String filename) throws IOException, ObjectMappingException {
