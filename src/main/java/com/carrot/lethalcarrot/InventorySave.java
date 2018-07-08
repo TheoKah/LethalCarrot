@@ -17,14 +17,15 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.block.BlockTypes;
 import org.spongepowered.api.block.tileentity.TileEntity;
+import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.data.key.Keys;
 import org.spongepowered.api.data.manipulator.mutable.RepresentedPlayerData;
 import org.spongepowered.api.data.manipulator.mutable.SkullData;
@@ -35,12 +36,17 @@ import org.spongepowered.api.effect.particle.ParticleTypes;
 import org.spongepowered.api.entity.Entity;
 import org.spongepowered.api.entity.EntityTypes;
 import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.entity.living.player.User;
+import org.spongepowered.api.event.cause.Cause;
+import org.spongepowered.api.event.cause.entity.spawn.EntitySpawnCause;
+import org.spongepowered.api.event.cause.entity.spawn.SpawnTypes;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.item.inventory.ItemStackSnapshot;
 import org.spongepowered.api.item.inventory.entity.Hotbar;
 import org.spongepowered.api.item.inventory.query.QueryOperationTypes;
 import org.spongepowered.api.item.inventory.type.InventoryRow;
 import org.spongepowered.api.scheduler.Task;
+import org.spongepowered.api.service.pagination.PaginationList;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.channel.MessageChannel;
 import org.spongepowered.api.text.format.TextColors;
@@ -177,6 +183,31 @@ public class InventorySave {
 		if (!graves.containsKey(loc.getExtent().getUniqueId()))
 			return false;
 		return graves.get(loc.getExtent().getUniqueId()).containsKey(loc.getBlockPosition());
+	}
+	
+	static public int listGraves(CommandSource src, User player) {
+		List<Text> contents = new ArrayList<>();
+		for (Entry<UUID, Map<Vector3i, Grave>> entryW : graves.entrySet()) {
+			String world = "Unknown";
+			if (Sponge.getServer().getWorldProperties(entryW.getKey()).isPresent())
+				world = Sponge.getServer().getWorldProperties(entryW.getKey()).get().getWorldName();
+			for (Entry<Vector3i, Grave> entryG : entryW.getValue().entrySet()) {
+				if (entryG.getValue().owner.equals(player.getUniqueId())) {
+					contents.add(Text.of(
+							TextColors.GRAY, " [",  world, "] ",
+							TextColors.YELLOW, entryG.getKey().getX(), " ", entryG.getKey().getY(), " ", entryG.getKey().getZ(),
+							TextColors.GRAY, " - ",
+							TextColors.YELLOW, entryG.getValue().date));
+				}
+			}
+		}
+		
+		PaginationList.builder()
+		.title(Text.of(TextColors.GOLD, "{ ", TextColors.GREEN, "Graves of ", TextColors.YELLOW, player.getName() , TextColors.GOLD, " }"))
+		.contents(contents)
+		.padding(Text.of("-"))
+		.sendTo(src);
+		return contents.size();
 	}
 
 	static public boolean hasItems(Player player) {
