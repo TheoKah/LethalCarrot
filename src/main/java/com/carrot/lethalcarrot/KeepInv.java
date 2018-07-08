@@ -3,6 +3,7 @@ package com.carrot.lethalcarrot;
 import java.io.File;
 import java.io.IOException;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.spongepowered.api.Sponge;
@@ -15,6 +16,7 @@ import org.spongepowered.api.command.spec.CommandExecutor;
 import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.config.ConfigDir;
 import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.entity.living.player.User;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.Order;
 import org.spongepowered.api.event.block.ChangeBlockEvent;
@@ -84,6 +86,35 @@ public class KeepInv {
 					}
 				})
 				.build();
+		
+		CommandSpec graveList = CommandSpec.builder()
+				.description(Text.of("List location of graves"))
+				.permission("keepinv.list")
+				.arguments(GenericArguments.optional(GenericArguments.user(Text.of("target"))))
+				.executor(new CommandExecutor() {
+					@Override
+					public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
+						User target = null;
+						if (args.<User>getOne("target").isPresent()) {
+							if (!src.hasPermission("keepinv.list.others")) {
+								src.sendMessage(Text.of(TextColors.DARK_RED, "Permission denied"));
+								return CommandResult.empty();
+							}
+							target = args.<User>getOne("target").get();
+						} else if (src instanceof User) {
+							target = (User) src;
+						} else {
+							src.sendMessage(Text.of(TextColors.DARK_RED, "Must be a player"));
+							return CommandResult.empty();
+						}
+						if (target == null) {
+							src.sendMessage(Text.of(TextColors.DARK_RED, "Target not found"));
+							return CommandResult.empty();
+						}
+						return CommandResult.successCount(InventorySave.listGraves(src, target));
+					}
+				})
+				.build();
 
 		CommandSpec fetchFile = CommandSpec.builder()
 				.description(Text.of("Get items from backup file"))
@@ -115,6 +146,7 @@ public class KeepInv {
 				.build();
 
 		Sponge.getCommandManager().register(this, restoreInv, "keepinv");
+		Sponge.getCommandManager().register(this, graveList, "graves", "gravelist");
 		Sponge.getCommandManager().register(this, fetchFile, "restore");
 
 	}
