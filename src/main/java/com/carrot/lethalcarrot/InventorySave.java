@@ -239,6 +239,7 @@ public class InventorySave {
 					inUse.remove(player.getUniqueId());
 				}
 			}).delay(5, TimeUnit.SECONDS).submit(KeepInv.getInstance());
+			sync();
 			return true;
 		}
 		return false;
@@ -259,6 +260,7 @@ public class InventorySave {
 			loc.setBlockType(BlockTypes.AIR, KeepInv.getCause());
 			player.spawnParticles(graveParticle, loc.getPosition(), 60);
 		}
+		sync();
 	}
 
 	static public void save(Player player, List<Entity> entities) throws IOException, ObjectMappingException {	
